@@ -35,7 +35,7 @@ describe RailsAdmin::ApplicationHelper do
       
       helper.action(:dashboard).should == nil
     end
-    
+        
     it 'should return only visible actions, passing all bindings' do
       RailsAdmin.config do |config|
         config.actions do
@@ -177,6 +177,76 @@ describe RailsAdmin::ApplicationHelper do
       @action = RailsAdmin::Config::Actions.find :dashboard
       controller.should_receive(:authorized?).exactly(1).times.and_return(true)
       helper.menu_for(:root).should_not match /Dashboard/
+    end
+  end
+  
+  describe "#main_navigation" do
+    it 'should show included models' do
+      RailsAdmin.config do |config|
+        config.included_models = [Ball, Comment]
+      end
+      helper.main_navigation.should match /(nav\-header).*(Navigation).*(Balls).*(Comments)/m
+    end
+    
+    it 'should not show unvisible models' do
+      RailsAdmin.config do |config|
+        config.included_models = [Ball, Comment]
+        config.model Comment do
+          hide
+        end
+      end
+      result = helper.main_navigation
+      result.should match /(nav\-header).*(Navigation).*(Balls)/m
+      result.should_not match "Comments"
+    end
+    
+    it "should show children of hidden models" do # https://github.com/sferik/rails_admin/issues/978
+      RailsAdmin.config do |config|
+        config.included_models = [Ball, Hardball]
+        config.model Ball do
+          hide
+        end
+      end
+      helper.main_navigation.should match /(nav\-header).*(Navigation).*(Hardballs)/m
+    end
+    
+    it "should show children of excluded models" do
+      RailsAdmin.config do |config|
+        config.included_models = [Hardball]
+      end
+      helper.main_navigation.should match /(nav\-header).*(Navigation).*(Hardballs)/m
+    end
+    
+    it 'should "nest" in navigation label' do
+      RailsAdmin.config do |config|
+        config.included_models = [Comment]
+        config.model Comment do
+          navigation_label 'commentable'
+        end
+      end
+      helper.main_navigation.should match /(nav\-header).*(commentable).*(Comments)/m
+    end
+    
+    it 'should "nest" in parent model' do
+      RailsAdmin.config do |config|
+        config.included_models = [Player, Comment]
+        config.model Comment do
+          parent Player
+        end
+      end
+      helper.main_navigation.should match /(Players).*(nav\-level\-1).*(Comments)/m
+    end
+    
+    it 'should order' do
+      RailsAdmin.config do |config|
+        config.included_models = [Player, Comment]
+      end
+      helper.main_navigation.should match /(Comments).*(Players)/m
+      
+      RailsAdmin.config(Comment) do 
+        weight 1
+      end
+      helper.main_navigation.should match /(Players).*(Comments)/m
     end
   end
   

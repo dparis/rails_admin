@@ -46,10 +46,10 @@ module RailsAdmin
       nodes_stack.group_by(&:navigation_label).map do |navigation_label, nodes|
         
         %{<li class='nav-header'>#{navigation_label || t('admin.misc.navigation')}</li>}.html_safe + 
-        nodes.select{|n| n.parent.nil?}.map do |node|
+        nodes.select{|n| n.parent.nil? || !n.parent.in?(nodes_stack.map{|c| c.abstract_model.model }) }.map do |node|
           %{
             <li#{' class="active"' if node.page_type == @page_type }>
-              <a href="#{index_path(:model_name => node.abstract_model.to_param)}">#{node.label_plural}</a>
+              <a href="#{url_for(:action => :index, :controller => 'rails_admin/main', :model_name => node.abstract_model.to_param)}">#{node.label_plural}</a>
             </li>
             #{navigation(nodes_stack, nodes_stack.select{|n| n.parent.to_s == node.abstract_model.model.to_s}, 1)}
           }.html_safe
@@ -61,7 +61,7 @@ module RailsAdmin
       nodes.map do |node|
         %{             
           <li#{' class="active"' if node.page_type == @page_type }>
-            <a class="nav-level-#{level}" href="#{index_path(:model_name => node.abstract_model.to_param)}">#{node.label_plural}</a>
+            <a class="nav-level-#{level}" href="#{url_for(:action => :index, :controller => 'rails_admin/main', :model_name => node.abstract_model.to_param)}">#{node.label_plural}</a>
           </li>
           #{navigation(nodes_stack, nodes_stack.select{ |n| n.parent.to_s == node.abstract_model.model.to_s}, level + 1)}
         }.html_safe

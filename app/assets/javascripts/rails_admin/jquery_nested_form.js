@@ -15,6 +15,11 @@ jQuery(function($) {
       // of each of the parent objects
       var context = ($(link).closest('.fields').find('input:first').attr('name') || '').replace(new RegExp('\[[a-z]+\]$'), '');
 
+      // Make a unique ID for the new child
+      var regexp = new RegExp('new_' + assoc, 'g');
+      var new_id = new Date().getTime();
+      content = content.replace(regexp, "new_" + new_id);
+
       // context will be something like this for a brand new form:
       // project[tasks_attributes][new_1255929127459][assignments_attributes][new_1255929128105]
       // or for an edit form:
@@ -35,12 +40,7 @@ jQuery(function($) {
           }
         }
       }
-
-      // Make a unique ID for the new child
-      var regexp = new RegExp('new_' + assoc, 'g');
-      var new_id = new Date().getTime();
-      content = content.replace(regexp, "new_" + new_id);
-
+      
       var field = this.insertFields(content, assoc, link);
       $(link).closest("form")
         .trigger({ type: 'nested:fieldAdded', field: field })
@@ -48,7 +48,9 @@ jQuery(function($) {
       return false;
     },
     insertFields: function(content, assoc, link) {
-      return $(content).insertBefore(link);
+      var tab_content = $(link).parent().siblings('.tab-content');
+      tab_content.append(content);
+      return tab_content.children().last(); // content inserted
     },
     removeFields: function(e) {
       var link = e.currentTarget;
